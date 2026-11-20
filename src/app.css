@@ -1,0 +1,281 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'tabulator-tables/dist/css/tabulator.min.css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.002 260);
+  --foreground: oklch(0.21 0.02 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.02 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.02 265);
+  --primary: oklch(0.51 0.21 274);
+  --primary-foreground: oklch(0.98 0.01 274);
+  --secondary: oklch(0.96 0.006 265);
+  --secondary-foreground: oklch(0.25 0.02 265);
+  --muted: oklch(0.965 0.005 265);
+  --muted-foreground: oklch(0.52 0.02 265);
+  --accent: oklch(0.95 0.025 274);
+  --accent-foreground: oklch(0.35 0.15 274);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.98 0.01 27);
+  --border: oklch(0.915 0.008 265);
+  --input: oklch(0.89 0.01 265);
+  --ring: oklch(0.6 0.18 274);
+
+  /* Status colours (always paired with icons/labels, never colour alone). */
+  --st-match: oklch(0.94 0.06 155);
+  --st-match-fg: oklch(0.42 0.12 155);
+  --st-manual: oklch(0.93 0.05 240);
+  --st-manual-fg: oklch(0.45 0.14 240);
+  --st-unmatched: oklch(0.94 0.005 265);
+  --st-unmatched-fg: oklch(0.5 0.02 265);
+  --st-duplicate: oklch(0.93 0.06 25);
+  --st-duplicate-fg: oklch(0.5 0.18 25);
+  --st-mismatch: oklch(0.95 0.08 85);
+  --st-mismatch-fg: oklch(0.5 0.12 70);
+  --st-changed: oklch(0.93 0.06 274);
+  --st-changed-fg: oklch(0.45 0.18 274);
+  --st-fill: oklch(0.92 0.09 155);
+  --st-overwrite: oklch(0.92 0.1 70);
+
+  --grid-bg: oklch(1 0 0);
+  --grid-header: oklch(0.97 0.004 265);
+  --grid-line: oklch(0.92 0.006 265);
+  --grid-selection: oklch(0.6 0.18 274 / 0.14);
+}
+
+.dark {
+  --background: oklch(0.17 0.01 265);
+  --foreground: oklch(0.95 0.005 265);
+  --card: oklch(0.21 0.012 265);
+  --card-foreground: oklch(0.95 0.005 265);
+  --popover: oklch(0.23 0.012 265);
+  --popover-foreground: oklch(0.95 0.005 265);
+  --primary: oklch(0.66 0.17 274);
+  --primary-foreground: oklch(0.16 0.03 274);
+  --secondary: oklch(0.27 0.012 265);
+  --secondary-foreground: oklch(0.95 0.005 265);
+  --muted: oklch(0.25 0.01 265);
+  --muted-foreground: oklch(0.7 0.015 265);
+  --accent: oklch(0.3 0.05 274);
+  --accent-foreground: oklch(0.9 0.05 274);
+  --destructive: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+  --border: oklch(0.3 0.012 265);
+  --input: oklch(0.34 0.012 265);
+  --ring: oklch(0.66 0.17 274);
+
+  --st-match: oklch(0.32 0.06 155);
+  --st-match-fg: oklch(0.82 0.12 155);
+  --st-manual: oklch(0.32 0.06 240);
+  --st-manual-fg: oklch(0.82 0.1 240);
+  --st-unmatched: oklch(0.27 0.01 265);
+  --st-unmatched-fg: oklch(0.72 0.02 265);
+  --st-duplicate: oklch(0.33 0.08 25);
+  --st-duplicate-fg: oklch(0.82 0.12 25);
+  --st-mismatch: oklch(0.34 0.07 80);
+  --st-mismatch-fg: oklch(0.86 0.12 85);
+  --st-changed: oklch(0.32 0.07 274);
+  --st-changed-fg: oklch(0.85 0.1 274);
+  --st-fill: oklch(0.36 0.08 155);
+  --st-overwrite: oklch(0.38 0.08 70);
+
+  --grid-bg: oklch(0.2 0.01 265);
+  --grid-header: oklch(0.24 0.012 265);
+  --grid-line: oklch(0.3 0.012 265);
+  --grid-selection: oklch(0.66 0.17 274 / 0.22);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-st-match: var(--st-match);
+  --color-st-match-fg: var(--st-match-fg);
+  --color-st-manual: var(--st-manual);
+  --color-st-manual-fg: var(--st-manual-fg);
+  --color-st-unmatched: var(--st-unmatched);
+  --color-st-unmatched-fg: var(--st-unmatched-fg);
+  --color-st-duplicate: var(--st-duplicate);
+  --color-st-duplicate-fg: var(--st-duplicate-fg);
+  --color-st-mismatch: var(--st-mismatch);
+  --color-st-mismatch-fg: var(--st-mismatch-fg);
+  --color-st-changed: var(--st-changed);
+  --color-st-changed-fg: var(--st-changed-fg);
+  --color-st-fill: var(--st-fill);
+  --color-st-overwrite: var(--st-overwrite);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    @apply h-full;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+}
+
+/* ---------- Tabulator spreadsheet theme ---------- */
+.ss-grid .tabulator {
+  background: var(--grid-bg);
+  border: 0;
+  font-size: 13px;
+  color: var(--foreground);
+}
+.ss-grid .tabulator .tabulator-header {
+  background: var(--grid-header);
+  border-bottom: 1px solid var(--grid-line);
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.ss-grid .tabulator .tabulator-header .tabulator-col {
+  background: var(--grid-header);
+  border-right: 1px solid var(--grid-line);
+}
+.ss-grid .tabulator .tabulator-header .tabulator-col.tabulator-range-highlight,
+.ss-grid .tabulator .tabulator-header .tabulator-col.tabulator-range-selected {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.ss-grid .tabulator .tabulator-tableholder {
+  background: var(--grid-bg);
+}
+.ss-grid .tabulator .tabulator-tableholder .tabulator-table {
+  background: var(--grid-bg);
+  color: var(--foreground);
+}
+.ss-grid .tabulator-row {
+  background: var(--grid-bg);
+  border-bottom: 1px solid var(--grid-line);
+  min-height: 26px;
+}
+.ss-grid .tabulator-row.tabulator-row-even {
+  background: var(--grid-bg);
+}
+.ss-grid .tabulator-row .tabulator-cell {
+  border-right: 1px solid var(--grid-line);
+  padding: 4px 6px;
+  height: 26px;
+}
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header {
+  background: var(--grid-header);
+  color: var(--muted-foreground);
+  border-right: 1px solid var(--grid-line);
+  font-variant-numeric: tabular-nums;
+}
+.ss-grid .tabulator-row .tabulator-cell.tabulator-range-selected:not(.tabulator-range-only-cell-selected):not(.tabulator-row-header) {
+  background-color: var(--grid-selection);
+}
+.ss-grid .tabulator-row .tabulator-cell.tabulator-range-only-cell-selected {
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header.tabulator-range-highlight,
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header.tabulator-range-selected {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.ss-grid .tabulator .tabulator-cell.tabulator-editing {
+  border: 1px solid var(--primary);
+  padding: 0;
+}
+.ss-grid .tabulator .tabulator-cell.tabulator-editing input {
+  background: var(--grid-bg);
+  color: var(--foreground);
+  padding: 4px 6px;
+}
+.ss-grid .tabulator-row.tabulator-selectable:hover {
+  background: var(--grid-bg);
+}
+.ss-grid .tabulator .tabulator-range-overlay .tabulator-range.tabulator-range-active {
+  border-color: var(--primary);
+}
+.ss-grid .tabulator .tabulator-range-overlay .tabulator-range.tabulator-range-active::after {
+  background-color: var(--primary);
+}
+.ss-grid .tabulator .tabulator-range-overlay .tabulator-range {
+  border-color: var(--primary);
+}
+
+/* Column header: letter + name */
+.ss-col-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  gap: 1px;
+}
+.ss-col-letter {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+.ss-col-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ss-col-name.is-empty {
+  font-weight: 400;
+  opacity: 0.35;
+}
+.ss-col-tag {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  text-transform: uppercase;
+}
+
+/* Row status (row header) and cell states */
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header.st-matched { box-shadow: inset 3px 0 0 var(--st-match-fg); }
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header.st-manual { box-shadow: inset 3px 0 0 var(--st-manual-fg); }
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header.st-unmatched { box-shadow: inset 3px 0 0 var(--st-unmatched-fg); }
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header.st-duplicate { box-shadow: inset 3px 0 0 var(--st-duplicate-fg); }
+.ss-grid .tabulator-row .tabulator-cell.tabulator-row-header.st-mismatch { box-shadow: inset 3px 0 0 var(--st-mismatch-fg); }
+
+.ss-grid .tabulator-row .tabulator-cell.cell-id.st-matched { background: var(--st-match); }
+.ss-grid .tabulator-row .tabulator-cell.cell-id.st-manual { background: var(--st-manual); }
+.ss-grid .tabulator-row .tabulator-cell.cell-id.st-duplicate { background: var(--st-duplicate); }
+.ss-grid .tabulator-row .tabulator-cell.cell-id.st-mismatch { background: var(--st-mismatch); }
+.ss-grid .tabulator-row .tabulator-cell.cell-changed { background: var(--st-changed); }
+.ss-grid .tabulator-row .tabulator-cell.cell-fill { background: var(--st-fill); }
+.ss-grid .tabulator-row .tabulator-cell.cell-overwrite { background: var(--st-overwrite); }
+.ss-grid .tabulator-row .tabulator-cell.cell-mapped-col { background-image: linear-gradient(var(--grid-selection), var(--grid-selection)); background-size: 100% 100%; }
+.ss-grid .tabulator-row.row-padding .tabulator-cell:not(.tabulator-row-header) { color: var(--muted-foreground); }
+.ss-grid .tabulator-row .tabulator-cell.cell-search-hit { outline: 2px solid var(--st-mismatch-fg); outline-offset: -2px; }
