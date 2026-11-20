@@ -13,6 +13,9 @@
   import { cn } from '$lib/utils';
   import Badge from './ui/badge.svelte';
   import Button from './ui/button.svelte';
+  import ContextMenu, { type ContextMenuEntry } from './ui/context-menu.svelte';
+  import MousePointerClick from '@lucide/svelte/icons/mouse-pointer-click';
+  import X from '@lucide/svelte/icons/x';
 
   const project = $derived(app.project!);
   const source = $derived(app.activeSource);
@@ -96,6 +99,30 @@
     app.editCell(ds.id, rowId, colId, value, `Perbaiki ${kind === 'nim' ? 'NIM' : 'nama'} di ${ds.name}`);
   }
 
+  function candidateMenu(side: 'source' | 'target', ds: Dataset, rowId: string, selected: boolean): ContextMenuEntry[] {
+    const other = side === 'source' ? selTarget : selSource;
+    const select = () => {
+      if (side === 'source') selSource = selected ? null : rowId;
+      else selTarget = selected ? null : rowId;
+    };
+    return [
+      { label: selected ? 'Batalkan pilihan' : 'Pilih baris ini', icon: selected ? X : MousePointerClick, onSelect: select },
+      {
+        label: `Pasangkan dengan baris ${side === 'source' ? 'Target' : 'Sumber'} terpilih`,
+        icon: Link2,
+        disabled: !other,
+        onSelect: () => {
+          if (side === 'source') selSource = rowId;
+          else selTarget = rowId;
+          void pair();
+        },
+      },
+      { kind: 'separator' },
+      { label: 'Perbaiki NIM', icon: Pencil, onSelect: () => editIdentity(ds, rowId, 'nim') },
+      { label: 'Perbaiki nama', icon: Pencil, onSelect: () => editIdentity(ds, rowId, 'name') },
+    ];
+  }
+
   const counts = $derived({
     pair: sourceCandidates.length + targetCandidates.length,
     mismatch: match?.nameMismatches.length ?? 0,
@@ -161,10 +188,12 @@
               <ul class="max-h-56 overflow-auto" role="listbox" aria-label={col.side === 'source' ? 'Baris Sumber tanpa pasangan' : 'Baris Target tanpa pasangan'}>
                 {#each col.list as r (r.rowId)}
                   {@const selected = (col.side === 'source' ? selSource : selTarget) === r.rowId}
-                  <li
+                  <ContextMenu
+                    as="li"
                     role="option"
                     aria-selected={selected}
                     class={cn('flex items-center gap-2 border-b px-2 py-1 text-[13px] last:border-0', selected ? 'bg-accent' : 'hover:bg-muted/60')}
+                    items={() => candidateMenu(col.side as 'source' | 'target', col.ds, r.rowId, selected)}
                   >
                     <button
                       class="flex min-w-0 flex-1 items-center gap-2 text-left"
@@ -181,7 +210,7 @@
                     <button class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" title="Perbaiki NIM" aria-label="Perbaiki NIM" onclick={() => editIdentity(col.ds, r.rowId, 'nim')}>
                       <Pencil class="size-3.5" />
                     </button>
-                  </li>
+                  </ContextMenu>
                 {:else}
                   <li class="px-2 py-3 text-center text-xs text-muted-foreground">Tidak ada.</li>
                 {/each}
@@ -198,7 +227,16 @@
             {#each match.nameMismatches as p (p.sourceRowId)}
               {@const s = rowName(source, p.sourceRowId)}
               {@const t = rowName(target, p.targetRowId)}
-              <li class="flex flex-wrap items-center gap-2 px-3 py-2 text-[13px]">
+              <ContextMenu
+                as="li"
+                class="flex flex-wrap items-center gap-2 px-3 py-2 text-[13px]"
+                items={[
+                  { label: 'Setujui beda nama', icon: Check, onSelect: () => app.approveNameMismatch(source.id, p) },
+                  { kind: 'separator' },
+                  { label: 'Perbaiki nama Sumber', icon: Pencil, onSelect: () => editIdentity(source, p.sourceRowId, 'name') },
+                  { label: 'Perbaiki nama Target', icon: Pencil, onSelect: () => editIdentity(target, p.targetRowId, 'name') },
+                ]}
+              >
                 <span class="font-mono text-xs">{p.nim}</span>
                 <span class="min-w-0 flex-1">
                   <span class="text-muted-foreground">Sumber:</span> {s.name}
@@ -207,7 +245,7 @@
                 </span>
                 <Button variant="ghost" size="xs" onclick={() => editIdentity(source, p.sourceRowId, 'name')}><Pencil /> Nama Sumber</Button>
                 <Button variant="outline" size="xs" onclick={() => app.approveNameMismatch(source.id, p)}><Check /> Setujui</Button>
-              </li>
+              </ContextMenu>
             {/each}
           </ul>
         {/if}
@@ -228,11 +266,18 @@
                 <ul class="divide-y">
                   {#each d.rowIds as rid (rid)}
                     {@const info = rowName(ds, rid)}
-                    <li class="flex items-center gap-2 px-3 py-1 text-[13px]">
+                    <ContextMenu
+                      as="li"
+                      class="flex items-center gap-2 px-3 py-1 text-[13px]"
+                      items={[
+                        { label: 'Perbaiki NIM', icon: Pencil, onSelect: () => editIdentity(ds, rid, 'nim') },
+                        { label: 'Perbaiki nama', icon: Pencil, onSelect: () => editIdentity(ds, rid, 'name') },
+                      ]}
+                    >
                       <span class="w-10 text-xs text-muted-foreground tabular-nums">baris {info.index + 1}</span>
                       <span class="flex-1">{info.name}</span>
                       <Button variant="ghost" size="xs" onclick={() => editIdentity(ds, rid, 'nim')}><Pencil /> NIM</Button>
-                    </li>
+                    </ContextMenu>
                   {/each}
                 </ul>
               </li>
@@ -249,13 +294,17 @@
               <ul class="divide-y rounded-lg border">
                 {#each manualForSource as m (m.id)}
                   {@const stale = match.staleManualMatches.find((x) => x.match.id === m.id)}
-                  <li class="flex items-center gap-2 px-3 py-1.5 text-[13px]">
+                  <ContextMenu
+                    as="li"
+                    class="flex items-center gap-2 px-3 py-1.5 text-[13px]"
+                    items={[{ label: 'Hapus pasangan manual', icon: Unlink, destructive: true, onSelect: () => app.removeManualMatch(m.id) }]}
+                  >
                     <Badge variant={stale ? 'duplicate' : 'manual'}>{stale ? 'usang' : 'manual'}</Badge>
                     <span class="min-w-0 flex-1 truncate">
                       <span class="font-mono text-xs">{m.sourceNim || '—'}</span> {m.sourceName} → <span class="font-mono text-xs">{m.targetNim || '—'}</span> {m.targetName}
                     </span>
                     <Button variant="ghost" size="icon-xs" aria-label="Hapus pasangan manual" title="Hapus pasangan" onclick={() => app.removeManualMatch(m.id)}><Unlink /></Button>
-                  </li>
+                  </ContextMenu>
                 {/each}
               </ul>
             {/if}
@@ -267,10 +316,14 @@
             {:else}
               <ul class="divide-y rounded-lg border">
                 {#each approvalsForSource as a (a.id)}
-                  <li class="flex items-center gap-2 px-3 py-1.5 text-[13px]">
+                  <ContextMenu
+                    as="li"
+                    class="flex items-center gap-2 px-3 py-1.5 text-[13px]"
+                    items={[{ label: 'Cabut persetujuan', icon: Undo2, destructive: true, onSelect: () => app.revokeApproval(a.id) }]}
+                  >
                     <span class="min-w-0 flex-1 truncate">"{a.sourceName}" ≈ "{a.targetName}"</span>
                     <Button variant="ghost" size="icon-xs" aria-label="Cabut persetujuan" title="Cabut persetujuan" onclick={() => app.revokeApproval(a.id)}><Undo2 /></Button>
-                  </li>
+                  </ContextMenu>
                 {/each}
               </ul>
             {/if}

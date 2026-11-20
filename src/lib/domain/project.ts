@@ -13,7 +13,7 @@ export function createProject(name: string): Project {
     name,
     createdAt: now,
     updatedAt: now,
-    target: createDataset('target', 'Target SIADO'),
+    target: createDataset('target', 'Target'),
     sources: [source],
     activeSourceId: source.id,
     mappings: { [source.id]: [] },

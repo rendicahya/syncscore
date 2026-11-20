@@ -4,6 +4,8 @@ import { parseTsv } from '../io/tsv';
 import { cellsOf, makeDataset } from '../test-utils';
 import { compareGridValues, diffForGrid, fromGridValue, toSheetData } from './adapter';
 import { planPaste } from './paste';
+import { planClear, selectionToMatrix } from './selection';
+import { serializeTsv } from '../io/tsv';
 
 const ds = () =>
   makeDataset('source', 'S', ['NIM', 'Nama', 'Nilai'], [
@@ -45,6 +47,18 @@ describe('spreadsheet adapter', () => {
     expect(diffForGrid(a, deleteRows(a, [a.rows[0].id])).kind).toBe('reload');
     expect(diffForGrid(a, insertColumns(a, 1, 1)).kind).toBe('reload');
     expect(diffForGrid(a, renameColumn(a, a.columns[0].id, 'X')).kind).toBe('none');
+  });
+
+  it('plans clearing only existing non-empty cells (zero is cleared, spare cells ignored)', () => {
+    const a = ds();
+    const edits = planClear(a, [0, 1, 5], [1, 2, 7]);
+    expect(edits).toEqual([
+      { rowIndex: 0, colIndex: 1, value: null },
+      { rowIndex: 0, colIndex: 2, value: null },
+      { rowIndex: 1, colIndex: 1, value: null },
+    ]);
+    const zero = applyPositionalEdits(a, [{ rowIndex: 1, colIndex: 2, value: 0 }]).dataset;
+    expect(planClear(zero, [1], [2])).toEqual([{ rowIndex: 1, colIndex: 2, value: null }]);
   });
 
   it('sorts numbers numerically and empty values last', () => {
@@ -107,6 +121,18 @@ describe('planPaste (multi-cell paste)', () => {
     });
     expect(plan.truncatedRows).toBe(1);
     expect(new Set(plan.edits.map((e) => e.rowIndex))).toEqual(new Set([4]));
+  });
+
+  it('round-trips a copied selection through TSV, keeping leading zeros and zero grades', () => {
+    const matrix = selectionToMatrix([
+      ['007', 'Ani\tA', 0],
+      ['008', undefined, null],
+    ]);
+    expect(matrix).toEqual([
+      ['007', 'Ani\tA', '0'],
+      ['008', '', ''],
+    ]);
+    expect(parseTsv(serializeTsv(matrix))).toEqual(matrix);
   });
 
   it('converts empty pasted cells to null (clears)', () => {

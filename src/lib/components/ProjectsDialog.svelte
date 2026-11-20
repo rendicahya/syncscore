@@ -9,6 +9,7 @@
   import { ui } from '$lib/state/ui.svelte';
   import { cn, formatDateTime } from '$lib/utils';
   import Button from './ui/button.svelte';
+  import ContextMenu from './ui/context-menu.svelte';
   import Dialog from './ui/dialog.svelte';
 
   type Props = { open: boolean };
@@ -63,7 +64,17 @@
       <ul class="divide-y rounded-lg border">
         {#each app.projects as p (p.id)}
           {@const isCurrent = p.id === app.project?.id}
-          <li class={cn('flex flex-wrap items-center gap-2 px-3 py-2', isCurrent && 'bg-accent/50')}>
+          <ContextMenu
+            as="li"
+            class={cn('flex flex-wrap items-center gap-2 px-3 py-2', isCurrent && 'bg-accent/50')}
+            items={[
+              { label: 'Buka', icon: FolderOpen, disabled: isCurrent, onSelect: () => openP(p.id) },
+              { label: 'Ganti nama', icon: Pencil, onSelect: () => rename(p.id, p.name) },
+              { label: 'Ekspor cadangan', icon: Download, onSelect: () => app.exportBackupById(p.id) },
+              { kind: 'separator' },
+              { label: 'Hapus proyek', icon: Trash2, destructive: true, onSelect: () => remove(p.id, p.name) },
+            ]}
+          >
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-medium">{p.name} {#if isCurrent}<span class="text-xs font-normal text-primary">(terbuka)</span>{/if}</p>
               <p class="text-xs text-muted-foreground">Diubah {formatDateTime(p.updatedAt)}</p>
@@ -74,7 +85,7 @@
             <Button size="icon-xs" variant="ghost" aria-label={`Ganti nama ${p.name}`} title="Ganti nama" onclick={() => rename(p.id, p.name)}><Pencil /></Button>
             <Button size="icon-xs" variant="ghost" aria-label={`Ekspor cadangan ${p.name}`} title="Ekspor cadangan" onclick={() => app.exportBackupById(p.id)}><Download /></Button>
             <Button size="icon-xs" variant="ghost" class="text-destructive hover:text-destructive" aria-label={`Hapus ${p.name}`} title="Hapus" onclick={() => remove(p.id, p.name)}><Trash2 /></Button>
-          </li>
+          </ContextMenu>
         {/each}
       </ul>
     {/if}

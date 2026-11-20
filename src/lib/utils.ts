@@ -34,6 +34,16 @@ export async function copyText(text: string): Promise<void> {
   if (!ok) throw new Error('clipboard-unavailable');
 }
 
+/** Reads text from the clipboard. Returns null when the browser does not allow it. */
+export async function readClipboardText(): Promise<string | null> {
+  if (!navigator.clipboard?.readText) return null;
+  try {
+    return await navigator.clipboard.readText();
+  } catch {
+    return null;
+  }
+}
+
 export function formatDateTime(iso: string): string {
   try {
     return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));

@@ -20,18 +20,32 @@
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import Table2 from '@lucide/svelte/icons/table-2';
   import Target from '@lucide/svelte/icons/target';
+  import ArrowDownAZ from '@lucide/svelte/icons/arrow-down-a-z';
+  import ArrowDownToLine from '@lucide/svelte/icons/arrow-down-to-line';
+  import ArrowLeftToLine from '@lucide/svelte/icons/arrow-left-to-line';
+  import ArrowRightToLine from '@lucide/svelte/icons/arrow-right-to-line';
+  import ArrowUpToLine from '@lucide/svelte/icons/arrow-up-to-line';
+  import ArrowUpZA from '@lucide/svelte/icons/arrow-up-z-a';
+  import Copy from '@lucide/svelte/icons/copy';
+  import Eraser from '@lucide/svelte/icons/eraser';
+  import FolderOpen from '@lucide/svelte/icons/folder-open';
+  import IdCard from '@lucide/svelte/icons/id-card';
+  import ListRestart from '@lucide/svelte/icons/list-restart';
+  import Scissors from '@lucide/svelte/icons/scissors';
+  import UserRound from '@lucide/svelte/icons/user-round';
   import { toTable } from '$lib/domain/dataset';
   import type { Dataset } from '$lib/domain/types';
-  import { serializeTsv } from '$lib/io/tsv';
+  import { parseTsv, serializeTsv } from '$lib/io/tsv';
   import { datasetToWorkbook, safeFileName, workbookToBytes } from '$lib/io/xlsx';
   import type { RowMatchStatus } from '$lib/matching/engine';
   import { app } from '$lib/state/app.svelte';
   import { ui } from '$lib/state/ui.svelte';
-  import { cn, copyText, downloadBlob } from '$lib/utils';
+  import { cn, copyText, downloadBlob, readClipboardText } from '$lib/utils';
   import { validateDataset } from '$lib/validation/dataset';
   import ImportDialog from './ImportDialog.svelte';
   import Spreadsheet, { type GridSelection } from './Spreadsheet.svelte';
   import Button from './ui/button.svelte';
+  import ContextMenu, { type ContextMenuEntry } from './ui/context-menu.svelte';
   import Select from './ui/select.svelte';
   import { menuContent, menuItem, menuItemDestructive, menuLabel, menuSeparator } from './ui/menu';
 
@@ -138,10 +152,8 @@
     if (name) app.renameColumn(dataset.id, col.id, name);
   }
 
-  async function renameDataset() {
-    if (!dataset) return;
-    const name = await ui.promptText({ title: 'Ganti nama dataset', label: 'Nama dataset', value: dataset.name });
-    if (name) app.renameDataset(dataset.id, name);
+  function renameDataset() {
+    if (dataset) void renameDatasetById(dataset);
   }
 
   function selectedRowIds(): string[] {
@@ -166,6 +178,120 @@
     const cols = selection.colIndexes;
     const base = cols.length ? (where === 'left' ? cols[0] : cols[cols.length - 1] + 1) : dataset.columns.length;
     app.insertColumns(dataset.id, Math.min(base, dataset.columns.length), 1);
+  }
+
+  async function copySelection(cut = false) {
+    if (!grid) return;
+    const matrix = grid.getSelectionMatrix();
+    if (!matrix.length) return;
+    try {
+      await copyText(serializeTsv(matrix));
+    } catch {
+      ui.toast('error', 'Tidak dapat menyalin', 'Browser menolak akses clipboard. Gunakan Ctrl+C.');
+      return;
+    }
+    if (cut) grid.clearSelected();
+  }
+
+  async function pasteFromClipboard() {
+    if (!grid) return;
+    const text = await readClipboardText();
+    if (text === null) {
+      ui.toast('info', 'Gunakan Ctrl+V untuk menempel', 'Browser tidak mengizinkan menu membaca clipboard secara langsung.');
+      return;
+    }
+    const block = parseTsv(text);
+    if (!block.length) {
+      ui.toast('info', 'Clipboard kosong');
+      return;
+    }
+    grid.pasteBlock(block);
+  }
+
+  function sortByColumn(ci: number, dir: 'asc' | 'desc') {
+    sortCol = String(ci);
+    sortDir = dir;
+  }
+
+  function gridMenu(): ContextMenuEntry[] {
+    if (!dataset || !grid) return [];
+    selection = grid.getSelection();
+    const ds = dataset;
+    const hasSel = selection.rowIndexes.length > 0 && selection.colIndexes.length > 0;
+    const rowIds = selectedRowIds();
+    const colIds = selectedColIds();
+    const singleCol = selection.colIndexes.length === 1 ? ds.columns[selection.colIndexes[0]] : undefined;
+    const ci = selection.colIndexes[0];
+    const entries: ContextMenuEntry[] = [
+      { label: 'Potong', icon: Scissors, shortcut: 'Ctrl+X', disabled: !hasSel, onSelect: () => copySelection(true) },
+      { label: 'Salin', icon: Copy, shortcut: 'Ctrl+C', disabled: !hasSel, onSelect: () => copySelection() },
+      { label: 'Tempel', icon: ClipboardPaste, shortcut: 'Ctrl+V', disabled: !hasSel, onSelect: pasteFromClipboard },
+      { label: 'Hapus isi sel', icon: Eraser, shortcut: 'Del', disabled: !hasSel, onSelect: () => grid?.clearSelected() },
+      { kind: 'separator' },
+      { label: 'Sisipkan baris di atas', icon: ArrowUpToLine, onSelect: () => insertRow('above') },
+      { label: 'Sisipkan baris di bawah', icon: ArrowDownToLine, onSelect: () => insertRow('below') },
+      {
+        label: rowIds.length > 1 ? `Hapus ${rowIds.length} baris` : 'Hapus baris',
+        icon: Trash2,
+        destructive: true,
+        disabled: rowIds.length === 0,
+        onSelect: () => app.deleteRows(ds.id, rowIds),
+      },
+      { kind: 'separator' },
+      { label: 'Sisipkan kolom di kiri', icon: ArrowLeftToLine, onSelect: () => insertCol('left') },
+      { label: 'Sisipkan kolom di kanan', icon: ArrowRightToLine, onSelect: () => insertCol('right') },
+    ];
+    if (singleCol) {
+      entries.push(
+        { label: `Ganti nama kolom "${singleCol.name}"`, icon: Type, onSelect: () => renameColumnAt(ci) },
+        {
+          label: 'Jadikan kolom NIM',
+          icon: IdCard,
+          disabled: ds.nimColumnId === singleCol.id,
+          onSelect: () => app.setIdentityColumn(ds.id, 'nim', singleCol.id),
+        },
+        {
+          label: 'Jadikan kolom Nama',
+          icon: UserRound,
+          disabled: ds.nameColumnId === singleCol.id,
+          onSelect: () => app.setIdentityColumn(ds.id, 'name', singleCol.id),
+        },
+      );
+    }
+    entries.push(
+      {
+        label: colIds.length > 1 ? `Hapus ${colIds.length} kolom` : 'Hapus kolom',
+        icon: Trash2,
+        destructive: true,
+        disabled: colIds.length === 0,
+        onSelect: () => app.deleteColumns(ds.id, colIds),
+      },
+      { kind: 'separator' },
+    );
+    if (singleCol) {
+      entries.push(
+        { label: 'Urutkan tampilan A→Z', icon: ArrowDownAZ, onSelect: () => sortByColumn(ci, 'asc') },
+        { label: 'Urutkan tampilan Z→A', icon: ArrowUpZA, onSelect: () => sortByColumn(ci, 'desc') },
+      );
+    }
+    if (sortCol !== '') entries.push({ label: 'Kembalikan urutan asli', icon: ListRestart, onSelect: () => (sortCol = '') });
+    entries.push({ kind: 'separator' }, { label: 'Salin seluruh tabel', icon: ClipboardCopy, onSelect: copyAll });
+    return entries;
+  }
+
+  function sourceTabMenu(s: Dataset): ContextMenuEntry[] {
+    return [
+      { label: 'Buka', icon: FolderOpen, disabled: s.id === project.activeSourceId, onSelect: () => app.setActiveSource(s.id) },
+      { label: 'Ganti nama', icon: Pencil, onSelect: () => renameDatasetById(s) },
+      { label: 'Tambah dataset Sumber', icon: Plus, onSelect: () => app.addSource() },
+      { kind: 'separator' },
+      { label: 'Hapus dataset ini', icon: Trash2, destructive: true, onSelect: () => app.removeSource(s.id) },
+    ];
+  }
+
+  async function renameDatasetById(ds: Dataset) {
+    const name = await ui.promptText({ title: 'Ganti nama dataset', label: 'Nama dataset', value: ds.name });
+    if (name) app.renameDataset(ds.id, name);
   }
 
   function convertNim() {
@@ -194,26 +320,34 @@
     {#if role === 'source'}
       <div class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto" role="tablist" aria-label="Dataset Sumber">
         {#each sourceTabs as s (s.id)}
-          <button
-            role="tab"
-            aria-selected={s.id === project.activeSourceId}
-            class={cn(
-              'shrink-0 rounded-md px-2.5 py-1 text-[13px] whitespace-nowrap transition-colors',
-              s.id === project.activeSourceId
-                ? 'bg-accent font-medium text-accent-foreground'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-            )}
-            onclick={() => app.setActiveSource(s.id)}
-          >
-            {s.name}
-          </button>
+          <ContextMenu items={() => sourceTabMenu(s)} class="shrink-0">
+            <button
+              role="tab"
+              aria-selected={s.id === project.activeSourceId}
+              class={cn(
+                'rounded-md px-2.5 py-1 text-[13px] whitespace-nowrap transition-colors',
+                s.id === project.activeSourceId
+                  ? 'bg-accent font-medium text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              )}
+              onclick={() => app.setActiveSource(s.id)}
+            >
+              {s.name}
+            </button>
+          </ContextMenu>
         {/each}
         <Button variant="ghost" size="icon-xs" aria-label="Tambah dataset Sumber" title="Tambah dataset Sumber" onclick={() => app.addSource()}>
           <Plus />
         </Button>
       </div>
     {:else}
-      <span class="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">{dataset?.name}</span>
+      <ContextMenu
+        as="span"
+        class="min-w-0 flex-1 truncate text-[13px] text-muted-foreground"
+        items={[{ label: 'Ganti nama dataset', icon: Pencil, onSelect: renameDataset }]}
+      >
+        {dataset?.name}
+      </ContextMenu>
     {/if}
 
     {#if dataset}
@@ -391,14 +525,14 @@
     {#if dataset.columns.length === 0}
       <div class="border-b bg-accent/40 px-3 py-2 text-[13px] text-accent-foreground">
         {#if role === 'target'}
-          Impor template SIADO (XLSX) atau tempel datanya. Baris pertama selalu dipakai sebagai header.
+          Impor berkas Target (XLSX) atau tempel datanya. Baris pertama selalu dipakai sebagai header.
         {:else}
           Impor berkas nilai (XLSX) atau tempel data dari Excel/Google Sheets. Anda juga dapat mengetik langsung di grid.
         {/if}
       </div>
     {/if}
 
-    <div class="min-h-0 flex-1">
+    <ContextMenu class="min-h-0 flex-1" items={gridMenu} restoreFocus={() => grid?.focusGrid()}>
       {#key dataset.id}
         <Spreadsheet
           bind:this={grid}
@@ -414,7 +548,7 @@
           onNotice={(m) => ui.toast('warning', 'Sebagian data tidak ditempel', m)}
         />
       {/key}
-    </div>
+    </ContextMenu>
     {#if sortCol !== '' || search || statusFilter}
       <div class="border-t bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground">
         Pengurutan dan penyaringan hanya mengubah tampilan; urutan baris data tidak berubah.

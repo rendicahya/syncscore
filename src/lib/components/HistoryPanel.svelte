@@ -9,6 +9,9 @@
   import { cn, formatDateTime } from '$lib/utils';
   import Badge from './ui/badge.svelte';
   import Button from './ui/button.svelte';
+  import ContextMenu, { type ContextMenuEntry } from './ui/context-menu.svelte';
+  import Eye from '@lucide/svelte/icons/eye';
+  import EyeOff from '@lucide/svelte/icons/eye-off';
 
   let filter = $state<'sync' | 'all'>('sync');
   let expanded = $state<string | null>(null);
@@ -17,6 +20,23 @@
   const list: Operation[] = $derived(
     [...history].reverse().filter((op) => filter === 'all' || op.type === 'sync'),
   );
+
+  function opMenu(op: Operation): ContextMenuEntry[] {
+    return [
+      op.status === 'applied'
+        ? { label: 'Batalkan operasi ini', icon: Undo2, onSelect: () => app.runHistory('undo', op.id) }
+        : { label: 'Ulangi operasi ini', icon: Redo2, onSelect: () => app.runHistory('redo', op.id) },
+      ...(op.type === 'sync'
+        ? [
+            {
+              label: expanded === op.id ? 'Sembunyikan detail' : 'Tampilkan detail',
+              icon: expanded === op.id ? EyeOff : Eye,
+              onSelect: () => (expanded = expanded === op.id ? null : op.id),
+            },
+          ]
+        : []),
+    ];
+  }
 
   function datasetName(id: string): string {
     return app.datasetById(id)?.name ?? '(dataset dihapus)';
@@ -38,7 +58,7 @@
     {:else}
       <ul class="divide-y">
         {#each list as op (op.id)}
-          <li class={cn('px-3 py-2', op.status === 'undone' && 'opacity-60')}>
+          <ContextMenu as="li" class={cn('px-3 py-2', op.status === 'undone' && 'opacity-60')} items={() => opMenu(op)}>
             <div class="flex items-start gap-2">
               <span class="mt-0.5 text-muted-foreground">
                 {#if op.type === 'sync'}<ArrowLeftRight class="size-4" />{:else if op.type === 'edit'}<Pencil class="size-4" />{:else}<Rows3 class="size-4" />{/if}
@@ -85,7 +105,7 @@
                 </div>
               </dl>
             {/if}
-          </li>
+          </ContextMenu>
         {/each}
       </ul>
     {/if}

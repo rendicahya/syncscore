@@ -64,6 +64,7 @@
     type GridSize,
   } from '$lib/spreadsheet/adapter';
   import { planPaste } from '$lib/spreadsheet/paste';
+  import { planClear, selectionToMatrix } from '$lib/spreadsheet/selection';
 
   type Props = {
     dataset: Dataset;
@@ -137,7 +138,7 @@
       tag.textContent = col.id === ds.nimColumnId ? 'NIM' : 'Nama';
       el.append(tag);
     }
-    el.title = col ? `${columnLetter(ci)} · ${col.name} (klik ganda untuk mengganti nama)` : columnLetter(ci);
+    el.title = col ? `${columnLetter(ci)} · ${col.name} (klik ganda untuk mengganti nama, klik kanan untuk menu)` : columnLetter(ci);
   }
 
   function titleFormatter(cell: CellComponent): HTMLElement {
@@ -335,6 +336,39 @@
     };
   }
 
+  /** Values of the active range in display order (rows x columns), for copying. */
+  export function getSelectionMatrix(): string[][] {
+    const ranges = table?.getRanges() ?? [];
+    const range = ranges[ranges.length - 1];
+    if (!range) return [];
+    const fields = range
+      .getColumns()
+      .map((c) => c.getField())
+      .filter((f) => f && f !== '_id');
+    return selectionToMatrix(range.getRows().map((r) => {
+      const data = r.getData() as Record<string, unknown>;
+      return fields.map((f) => data[f]);
+    }));
+  }
+
+  /** Pastes a parsed TSV block at the active range (same behaviour as Ctrl+V). */
+  export function pasteBlock(block: string[][]): void {
+    if (block.length) handlePaste(block);
+  }
+
+  /** Clears the contents of the selected cells as one recorded edit. */
+  export function clearSelected(): number {
+    const sel = getSelection();
+    const edits = planClear(current(), sel.rowIndexes, sel.colIndexes);
+    if (edits.length) onEdits(edits, `Hapus isi ${edits.length} sel di ${label}`);
+    return edits.length;
+  }
+
+  /** Returns keyboard focus to the grid (e.g. after a menu closes). */
+  export function focusGrid(): void {
+    holder()?.focus({ preventScroll: true });
+  }
+
   /** Scrolls to a dataset row and selects its first cell. */
   export function revealRow(rowIndex: number): void {
     if (!table) return;
@@ -435,6 +469,12 @@
     }
   }
 
+  /** Inside an active cell editor, keep the browser's native menu (cut/copy/paste of text). */
+  function onContextMenu(e: MouseEvent): void {
+    const target = e.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) e.stopPropagation();
+  }
+
   // ------------------------------------------------------------------ lifecycle
 
   onMount(() => {
@@ -509,10 +549,12 @@
     on('rangeAdded', emitSelection);
     on('rangeRemoved', emitSelection);
     host.addEventListener('keydown', onKeydown, true);
+    host.addEventListener('contextmenu', onContextMenu);
   });
 
   onDestroy(() => {
     host?.removeEventListener('keydown', onKeydown, true);
+    host?.removeEventListener('contextmenu', onContextMenu);
     table?.destroy();
     table = null;
   });

@@ -5,7 +5,7 @@ import { cellsOf, col, makeDataset } from '../test-utils';
 import { applySyncPlan, buildSyncPlan, countPlan, findRepeatedMappings, SyncError, type PlanContext } from './engine';
 
 function setup() {
-  const target = makeDataset('target', 'SIADO', ['No', 'NIM', 'Nama', 'Tugas', 'UTS', 'UAS'], [
+  const target = makeDataset('target', 'Target', ['No', 'NIM', 'Nama', 'Tugas', 'UTS', 'UAS'], [
     [1, '0215001', 'Ani', null, null, null],
     [2, '0215002', 'Budi', null, 75, null],
     [3, '0215003', 'Citra', null, null, null],

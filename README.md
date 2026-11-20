@@ -1,6 +1,6 @@
 # SyncScore — Smart Grade Synchronization
 
-SyncScore membantu dosen menyinkronkan nilai mahasiswa dari satu atau beberapa spreadsheet Sumber ke template SIADO (Target) **berdasarkan NIM, bukan posisi baris**. Seluruh pemrosesan berjalan di browser; tidak ada server dan data mahasiswa tidak pernah dikirim ke mana pun.
+SyncScore membantu dosen menyinkronkan nilai mahasiswa dari satu atau beberapa spreadsheet Sumber ke spreadsheet Target **berdasarkan NIM, bukan posisi baris**. Seluruh pemrosesan berjalan di browser; tidak ada server dan data mahasiswa tidak pernah dikirim ke mana pun.
 
 Aplikasi: https://rendicahya.github.io/syncscore/
 
@@ -14,6 +14,7 @@ Aplikasi: https://rendicahya.github.io/syncscore/
 - Riwayat sinkronisasi lengkap dengan undo/redo selektif yang tidak merusak perubahan lain.
 - Ekspor Target ke XLSX (NIM sebagai teks) atau salin ke clipboard.
 - Proyek tersimpan otomatis di IndexedDB; ekspor/impor cadangan JSON; hapus semua data lokal.
+- Menu klik kanan (context menu) di spreadsheet (potong/salin/tempel, hapus isi, sisip/hapus baris & kolom, kolom NIM/Nama, urutkan), tab dataset, daftar pencocokan, pemetaan, riwayat, dan proyek.
 - Tema terang/gelap, tata letak responsif.
 
 ## Pengembangan

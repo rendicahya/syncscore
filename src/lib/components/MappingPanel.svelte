@@ -11,6 +11,7 @@
   import { validatePairs } from '$lib/sync/engine';
   import Badge from './ui/badge.svelte';
   import Button from './ui/button.svelte';
+  import ContextMenu from './ui/context-menu.svelte';
   import Select from './ui/select.svelte';
 
   type Props = { onPreview: () => void };
@@ -129,7 +130,16 @@
       {:else}
         <ul class="space-y-1.5">
           {#each pairs as pair, i (i)}
-            <li class="flex items-center gap-2">
+            <ContextMenu
+              as="li"
+              class="flex items-center gap-2"
+              items={[
+                { label: 'Tambah pasangan', icon: Plus, onSelect: addPair },
+                { label: 'Pratinjau sinkronisasi', icon: Eye, onSelect: preview },
+                { kind: 'separator' },
+                { label: 'Hapus pasangan ini', icon: X, destructive: true, onSelect: () => remove(i) },
+              ]}
+            >
               <Select
                 class="h-8 text-[13px]"
                 aria-label={`Kolom Sumber pasangan ${i + 1}`}
@@ -150,7 +160,7 @@
                 {#each targetCandidates as c (c.id)}<option value={c.id}>{c.name}</option>{/each}
               </Select>
               <Button variant="ghost" size="icon-xs" aria-label={`Hapus pasangan ${i + 1}`} onclick={() => remove(i)}><X /></Button>
-            </li>
+            </ContextMenu>
           {/each}
         </ul>
         {#if pairErrors.length}
