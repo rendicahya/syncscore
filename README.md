@@ -15,6 +15,7 @@ Aplikasi: https://rendicahya.github.io/syncscore/
 - Ekspor Target ke XLSX (NIM sebagai teks) atau salin ke clipboard.
 - Proyek tersimpan otomatis di IndexedDB; ekspor/impor cadangan JSON; hapus semua data lokal.
 - Menu klik kanan (context menu) di spreadsheet (potong/salin/tempel, hapus isi, sisip/hapus baris & kolom, kolom NIM/Nama, urutkan), tab dataset, daftar pencocokan, pemetaan, riwayat, dan proyek.
+- PWA: dapat dipasang sebagai aplikasi dan dibuka tanpa internet. Service worker hanya meng-cache berkas aplikasi statis (bukan data mahasiswa); versi baru diterapkan setelah pengguna menekan "Perbarui sekarang".
 - Tema terang/gelap, tata letak responsif.
 
 ## Pengembangan

@@ -32,7 +32,12 @@
   import { summarizeMatch } from '$lib/matching/engine';
   import { app } from '$lib/state/app.svelte';
   import { ui } from '$lib/state/ui.svelte';
+  import { pwa } from '$lib/state/pwa.svelte';
   import { cn } from '$lib/utils';
+  import MonitorDown from '@lucide/svelte/icons/monitor-down';
+  import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+  import WifiOff from '@lucide/svelte/icons/wifi-off';
+  import X from '@lucide/svelte/icons/x';
 
   type WorkTab = 'mapping' | 'matching' | 'history';
   let workTab = $state<WorkTab>('mapping');
@@ -45,6 +50,7 @@
   onMount(() => {
     ui.initTheme();
     void app.init();
+    pwa.init();
   });
 
   const issueCount = $derived.by(() => {
@@ -116,6 +122,19 @@
       </span>
     {/if}
     <div class="ml-auto flex items-center gap-1">
+      {#if !pwa.online}
+        <span
+          class="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+          title="Tidak ada koneksi internet. Semua fitur tetap berfungsi karena data diproses dan disimpan di perangkat ini."
+        >
+          <WifiOff class="size-3.5" /> <span class="hidden sm:inline">Offline</span>
+        </span>
+      {/if}
+      {#if pwa.canInstall && !pwa.installed}
+        <Button variant="ghost" size="sm" onclick={() => pwa.install()} aria-label="Pasang aplikasi" title="Pasang SyncScore sebagai aplikasi (dapat dipakai offline)">
+          <MonitorDown /> <span class="hidden md:inline">Pasang</span>
+        </Button>
+      {/if}
       <Button
         variant="ghost"
         size="icon-sm"
@@ -158,6 +177,15 @@
       </DropdownMenu.Root>
     </div>
   </header>
+
+  {#if pwa.needRefresh}
+    <div class="flex flex-wrap items-center gap-2 border-b bg-primary/10 px-4 py-1.5 text-xs text-foreground" role="status">
+      <RefreshCw class="size-3.5 shrink-0 text-primary" />
+      <span class="flex-1">Versi baru SyncScore tersedia. Proyek Anda disimpan terlebih dahulu sebelum memuat ulang.</span>
+      <Button size="xs" onclick={() => pwa.applyUpdate()}>Perbarui sekarang</Button>
+      <Button variant="ghost" size="icon-xs" aria-label="Nanti saja" title="Nanti saja" onclick={() => pwa.dismissUpdate()}><X /></Button>
+    </div>
+  {/if}
 
   {#if app.storageError}
     <div class="flex items-center gap-2 border-b bg-destructive/10 px-4 py-1.5 text-xs text-destructive">

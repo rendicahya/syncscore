@@ -3,6 +3,7 @@
   import HardDrive from '@lucide/svelte/icons/hard-drive';
   import ShieldCheck from '@lucide/svelte/icons/shield-check';
   import Trash2 from '@lucide/svelte/icons/trash-2';
+  import WifiOff from '@lucide/svelte/icons/wifi-off';
   import { app } from '$lib/state/app.svelte';
   import { ui } from '$lib/state/ui.svelte';
   import Button from './ui/button.svelte';
@@ -43,6 +44,15 @@
           Proyek disimpan otomatis di IndexedDB browser ini. Data tidak tersedia di browser atau perangkat lain, dan dapat hilang jika data situs dihapus. Ekspor cadangan secara berkala untuk mengamankan atau memindahkan proyek.
         </p>
         {#if app.storageError}<p class="mt-1 text-destructive">{app.storageError}</p>{/if}
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <WifiOff class="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+      <div>
+        <p class="font-medium">Dapat dipakai tanpa internet</p>
+        <p class="text-muted-foreground">
+          SyncScore menyimpan berkas aplikasinya (bukan data Anda) di cache browser sehingga tetap dapat dibuka saat offline, dan dapat dipasang sebagai aplikasi. Data mahasiswa hanya ada di IndexedDB di atas.
+        </p>
       </div>
     </div>
     <div class="flex flex-wrap gap-2 rounded-lg border bg-muted/40 p-3">
